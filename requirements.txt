@@ -1,0 +1,9 @@
+langchain
+langchain-groq
+python-dotenv
+vaderSentiment
+pandas
+numpy
+plotly
+streamlit
+pytest

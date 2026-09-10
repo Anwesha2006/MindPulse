@@ -1,7 +1,7 @@
 from langchain_groq import ChatGroq
 from config import MOOD_SCALE_MIN,MOOD_SCALE_MAX,LLM_MODEL,LLM_TEMPERATURE,LLM_MAX_TOKENS
 from typing import List
-from langchain.prompts.chat import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 import json
 import re
 from pydantic import BaseModel,Field
@@ -24,13 +24,10 @@ Given the user's check-in text, output a JSON object with exactly these fields:
    Set to false otherwise. Err on the side of true if uncertain.
 
 Rules:
-- Respond with ONLY the JSON object. No preamble, no explanation, no markdown code fences.
 - Do not add fields beyond the three specified.
 - If the text is too short or unclear to assess, use your best reasonable judgment rather than leaving fields empty.
 - Never refuse to extract data, even for difficult or emotional content — your role is analysis, not response.
-
-Example output format:
-{"mood_score": 6, "tags": ["work stress", "sleep"], "risk_flag": false}""").format(MOOD_SCALE_MIN=MOOD_SCALE_MIN,MOOD_SCALE_MAX=MOOD_SCALE_MAX)
+""").format(MOOD_SCALE_MIN=MOOD_SCALE_MIN, MOOD_SCALE_MAX=MOOD_SCALE_MAX)
 
 class MoodExtractor(BaseModel):
     mood_score: int=Field(...,alias="mood_score")
@@ -55,7 +52,6 @@ def run_mood_extractor(text)->dict:
     chain=build_mood_extractor()
     try:
         response:MoodExtractor=chain.invoke({"text":text})
-        return response.model.dump()
-
+        return response.model_dump()
     except Exception as e:
       raise RuntimeError(f"Mood extraction failed: {e}")

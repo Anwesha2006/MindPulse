@@ -1,17 +1,17 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv()
+from dotenv import load_dotenv
 
 load_dotenv()
 BASE_DIR=Path(__file__).resolve().parent
 GROQ_API_KEY =os.getenv("GROQ_API_KEY")
 
-LLM_PROVIDER=groq
-LLM_MODEL=openai/gpt-oss-20b
+LLM_PROVIDER="groq"
+LLM_MODEL="openai/gpt-oss-20b"
 LLM_TEMPERATURE=0.3
 LLM_MAX_TOKENS=500
  
-MOOD_SCALE_MAX=1
+MOOD_SCALE_MIN=1
 MOOD_SCALE_MAX=10
 
 MEMORY_WINDOW=5

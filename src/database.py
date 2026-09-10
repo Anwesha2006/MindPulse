@@ -8,32 +8,32 @@ def get_db_connection():
     connection.row_factory=sqlite3.Row
     return connection
 
-def create_table():
+def init_db():
     conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users
-    (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS entries
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    mood_score TEXT NOT NULL,
-    stress_level INTEGER,
-    tags TEXT NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    ''')
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            raw_text TEXT NOT NULL,
+            mood_score INTEGER,
+            tags TEXT,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
     conn.commit()
     conn.close()
 def add_user(name):
-     conn=get_db_connection()
+    conn=get_db_connection()
     cursor=conn.cursor()
     cursor.execute("INSERT INTO users (name) VALUES (?)",(name,))
     conn.commit()
@@ -41,10 +41,10 @@ def add_user(name):
     conn.close()
     return user_id
 
-def add_entries(user_id,mood_score=None,tags=None,message):
-     conn=get_db_connection()
+def add_entries(user_id,raw_text,mood_score=None,tags=None):
+    conn=get_db_connection()
     cursor=conn.cursor()
-    cursor.execute("""INSERT INTO entries (user_id,mood_score,tags,message) VALUES (?,?,?,?)""",(user_id,mood_score,tags,message))
+    cursor.execute("""INSERT INTO entries (user_id,raw_text,mood_score,tags) VALUES (?,?,?,?)""",(user_id,raw_text,mood_score,tags))
     conn.commit()
     entry_id=cursor.lastrowid
     conn.close()
@@ -52,14 +52,20 @@ def add_entries(user_id,mood_score=None,tags=None,message):
 def get_recent_entries(user_id,limit=5):
     conn=get_db_connection()
     cursor= conn.cursor()
-    cursor.execute("""SELECT * FROM entries WHERE USER_ID=? ORDER BY timestamp DESC LIMIT=?""",(user_id,limit))
+    cursor.execute(""" SELECT * FROM entries
+        WHERE user_id = ?
+        ORDER BY timestamp DESC
+        LIMIT ?""",(user_id,limit))
     rows=cursor.fetchall()
     conn.close()
     return rows
 def get_entries_since(user_id,days):
-      conn=get_db_connection()
+    conn=get_db_connection()
     cursor= conn.cursor()
-    cursor.execute("""SELECT * FROM entries WHERE USER_ID=> AND timestamp>=datetime('now',?) ORDER BY timestamp ASC """,(f"-{days} days",user_id))
+    cursor.execute("""SELECT * FROM entries
+        WHERE user_id = ?
+          AND timestamp >= datetime('now', ?)
+        ORDER BY timestamp ASC """,(user_id,f"-{days} days"))
     rows=cursor.fetchall()
     conn.close()
     return rows

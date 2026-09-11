@@ -1,4 +1,4 @@
-from config import MEMORY_WINDOW,CHECKIN_QUESTIONS
+from config import MEMORY_WINDOW,CHECKIN_QUESTIONS,LLM_MODEL,LLM_TEMPERATURE,LLM_MAX_TOKENS
 from database import get_recent_entries,add_entries
 from mood_extractor import run_mood_extractor
 from langchain_core.prompts import ChatPromptTemplate
@@ -19,18 +19,20 @@ CRISIS_MESSAGE = (
 )
 
 def build_checkin():
-    llm=ChatGroq(model=LLM_MODEL,
+    llm = ChatGroq(
+    model=LLM_MODEL,
     temperature=LLM_TEMPERATURE,
-    max_tokens=LLM_MAX_TOKENS)
-    prompt=ChatPromptTemplate.from_messages([
-        ("system",SYSTEM_PROMPT),
-        ("human","{text}"),("ai","{mood_result}")
-        ])
-    return prompt|llm
+    max_tokens=LLM_MAX_TOKENS,
+    )
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", SYSTEM_PROMPT),
+        ("human", "Recent history: {history}\n\nToday's check-in: {text}"),
+    ])
+    return prompt | llm
 def format_history(entries):
     if not entries:
         return "No previous entries."
-    return "\n".join([f"{entry['mood_score']} - {entry['message']}" for entry in entries])
+    return "\n".join([f"{row['timestamp']}: mood {row['mood_score']}, tags: {row['tags']}" for row in entries])
 def process_checkin(user_id,combined_text):
     history_entries=get_recent_entries(user_id,limit=MEMORY_WINDOW)
     history_text=format_history(history_entries)
@@ -47,7 +49,7 @@ def process_checkin(user_id,combined_text):
             "reply": CRISIS_MESSAGE,
             "mood_score": mood_result["mood_score"],
             "tags": mood_result["tags"],
-            "risk_flag": TRUE
+            "risk_flag": True
         }
     chain=build_checkin()
     response=chain.invoke({"text":combined_text,"history":history_text})
@@ -55,7 +57,7 @@ def process_checkin(user_id,combined_text):
         "reply": response.content,
         "mood_score": mood_result["mood_score"],
         "tags": mood_result["tags"],
-        "risk_flag": FALSE
+        "risk_flag": False
     }
 def run_checkin_cli(user_id):
     responses=[]

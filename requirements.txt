@@ -7,3 +7,6 @@ numpy
 plotly
 streamlit
 pytest
+fastapi
+uvicorn
+pydantic

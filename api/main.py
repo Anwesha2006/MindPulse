@@ -28,7 +28,11 @@ app = FastAPI(title="MindPulse API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://mind-pulse-kappa.vercel.app",
+        "https://mind-pulse-5sjntxp3m-anweshas-projects-f690bb58.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
